@@ -6,7 +6,8 @@ import pycocotools.mask as maskUtils
 
 from mmdet.core import BitmapMasks, PolygonMasks
 from ..builder import PIPELINES
-
+import nori2 as nori
+nf = nori.Fetcher()
 
 @PIPELINES.register_module()
 class LoadImageFromFile(object):
@@ -75,6 +76,41 @@ class LoadImageFromFile(object):
                     f"color_type='{self.color_type}', "
                     f'file_client_args={self.file_client_args})')
         return repr_str
+
+@PIPELINES.register_module()
+class LoadImageFromNori(LoadImageFromFile):
+    def __call__(self, results):
+        """Call functions to load image and get image meta information.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet.CustomDataset`.
+
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+
+        if self.file_client is None:
+            self.file_client = mmcv.FileClient(**self.file_client_args)
+
+        if results['img_prefix'] is not None:
+            filename = osp.join(results['img_prefix'],
+                                results['img_info']['filename'])
+        else:
+            filename = results['img_info']['filename']
+
+        img_bytes = nf.get(results['img_info']['filename'])
+        img = mmcv.imfrombytes(img_bytes, flag=self.color_type)
+        if self.to_float32:
+            img = img.astype(np.float32)
+
+        results['filename'] = filename
+        results['ori_filename'] = results['img_info']['filename']
+        results['img'] = img
+        results['img_shape'] = img.shape
+        results['ori_shape'] = img.shape
+        results['img_fields'] = ['img']
+        return results
+
 
 
 @PIPELINES.register_module()

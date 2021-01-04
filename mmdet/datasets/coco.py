@@ -44,7 +44,7 @@ class CocoDataset(CustomDataset):
                'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock',
                'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush')
 
-    def load_annotations(self, ann_file):
+    def load_annotations(self, ann_file, nori_id = True):
         """Load annotation from COCO style annotation file.
 
         Args:
@@ -61,7 +61,10 @@ class CocoDataset(CustomDataset):
         data_infos = []
         for i in self.img_ids:
             info = self.coco.load_imgs([i])[0]
-            info['filename'] = info['file_name']
+            if not nori_id:
+                info['filename'] = info['file_name']
+            else:
+                info['filename'] = info['nori_id']
             data_infos.append(info)
         return data_infos
 
