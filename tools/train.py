@@ -16,7 +16,7 @@ from mmdet.apis import set_random_seed, train_detector
 from mmdet.datasets import build_dataset
 from mmdet.models import build_detector
 from mmdet.utils import collect_env, get_root_logger
-
+from thirdparty.mtransformer import build_mtransformer
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
@@ -157,6 +157,10 @@ def main():
 
     model = build_detector(
         cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
+    
+    if hasattr(cfg, "quant_transformer"):
+        model_transformer = build_mtransformer(cfg.quant_transformer)
+        model = model_transformer(model, logger= logger)
 
     datasets = [build_dataset(cfg.data.train)]
     if len(cfg.workflow) == 2:
