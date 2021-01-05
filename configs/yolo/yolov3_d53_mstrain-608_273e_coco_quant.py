@@ -44,10 +44,8 @@ quant_transformer = dict(
     type = "mTransformerV2",
     quan_policy = dict(
         Conv2d = dict(
-            type = "DSQConv",
-            num_bit = 4,
-            QInput = True,
-            bSetQ = True),
+            type = "APOTQuantConv2d",
+            bit = 5),
         Linear = dict(
             type = "EightBitQuantLinear")
     ),
@@ -114,8 +112,8 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    samples_per_gpu=8,
-    workers_per_gpu=2,
+    samples_per_gpu=1            ,
+    workers_per_gpu=3,
     train=dict(
         type=dataset_type,
         ann_file='/data/workspace/dataset/coco/annotations/2017/instances_val2017_nori.json',
@@ -131,6 +129,15 @@ data = dict(
         ann_file='/data/workspace/dataset/coco/annotations/2017/instances_val2017_nori.json',
         img_prefix= None,
         pipeline=test_pipeline))
+
+# logger
+log_config = dict(
+    interval=50,
+    hooks=[
+        dict(type='TextLoggerHook'),
+        dict(type='TensorboardLoggerHookV2',  by_iter = True, cmp_multilayer_dist = True)
+    ])
+
 # optimizer
 optimizer = dict(type='SGD', lr=0.001, momentum=0.9, weight_decay=0.0005)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
