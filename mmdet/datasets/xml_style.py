@@ -34,6 +34,7 @@ class XMLDataset(CustomDataset):
             list[dict]: Annotation info from XML file.
         """
 
+        assert not ann_file.startswith('oss://'), "s3 path not supported"
         data_infos = []
         img_ids = mmcv.list_from_file(ann_file)
         for img_id in img_ids:

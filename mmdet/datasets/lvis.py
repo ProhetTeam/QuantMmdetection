@@ -275,6 +275,7 @@ class LVISV05Dataset(CocoDataset):
             list[dict]: Annotation info from LVIS api.
         """
 
+        assert not ann_file.startswith('oss://'), "s3 path not supported"
         try:
             import lvis
             assert lvis.__version__ >= '10.5.3'

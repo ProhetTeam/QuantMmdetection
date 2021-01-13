@@ -108,7 +108,9 @@ class CustomDataset(Dataset):
 
     def load_annotations(self, ann_file):
         """Load annotation from annotation file."""
-        return mmcv.load(ann_file)
+        from refile import smart_open
+
+        return mmcv.load(smart_open(ann_file), file_format=osp.splitext(ann_file)[1:])
 
     def load_proposals(self, proposal_file):
         """Load proposal from proposal file."""

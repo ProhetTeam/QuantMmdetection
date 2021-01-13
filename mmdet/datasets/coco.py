@@ -60,8 +60,11 @@ class CocoDataset(CustomDataset):
         Returns:
             list[dict]: Annotation info from COCO api.
         """
+        import json
+        from refile import smart_open
 
-        self.coco = COCO(ann_file)
+        self.coco = COCO()
+        self.coco.dataset = json.load(smart_open(ann_file))
         self.cat_ids = self.coco.get_cat_ids(cat_names=self.CLASSES)
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
         self.img_ids = self.coco.get_img_ids()
