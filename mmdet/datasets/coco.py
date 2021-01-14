@@ -43,8 +43,15 @@ class CocoDataset(CustomDataset):
                'mouse', 'remote', 'keyboard', 'cell phone', 'microwave',
                'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock',
                'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush')
+    def __init__(self,
+                 ann_file,
+                 pipeline,
+                 use_nori = True,
+                 **kwargs):
+        self.use_nori = use_nori
+        super(CocoDataset, self).__init__(ann_file, pipeline, **kwargs)
 
-    def load_annotations(self, ann_file, nori_id = True):
+    def load_annotations(self, ann_file):
         """Load annotation from COCO style annotation file.
 
         Args:
@@ -61,7 +68,7 @@ class CocoDataset(CustomDataset):
         data_infos = []
         for i in self.img_ids:
             info = self.coco.load_imgs([i])[0]
-            if not nori_id:
+            if not self.use_nori:
                 info['filename'] = info['file_name']
             else:
                 info['filename'] = info['nori_id']
