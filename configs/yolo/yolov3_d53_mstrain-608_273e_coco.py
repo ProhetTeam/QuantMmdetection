@@ -51,7 +51,7 @@ test_cfg = dict(
     max_per_img=100)
 # dataset settings
 dataset_type = 'CocoDataset'
-data_root = '/data/workspace/dataset/coco/annotations/2017/'
+data_root = 's3://tanfeiyang-dataset-one/tanfeiyang/coco_anns/'
 img_norm_cfg = dict(mean=[0, 0, 0], std=[255., 255., 255.], to_rgb=True)
 train_pipeline = [
     dict(type='LoadImageFromNori', to_float32=True),
@@ -94,7 +94,7 @@ data = dict(
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        ann_file='/data/workspace/dataset/coco/annotations/2017/instances_train2017_nori.json',
+        ann_file=data_root + 'instances_train2017_nori.json',
         img_prefix= None,
         pipeline=train_pipeline),
     val=dict(

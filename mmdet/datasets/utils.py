@@ -60,3 +60,16 @@ def replace_ImageToTensor(pipelines):
                 'data pipeline in your config file.', UserWarning)
             pipelines[i] = {'type': 'DefaultFormatBundle'}
     return pipelines
+
+
+def smart_open_map(func, *args, **kwargs):
+    import builtins
+    from refile import smart_open
+    origin_open = builtins.open
+
+    def smart_open_once(*args, **kwargs):
+        builtins.open = origin_open
+        return smart_open(*args, **kwargs)
+
+    builtins.open = smart_open_once
+    return func(*args, **kwargs)

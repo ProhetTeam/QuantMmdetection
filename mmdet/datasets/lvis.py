@@ -274,6 +274,7 @@ class LVISV05Dataset(CocoDataset):
         Returns:
             list[dict]: Annotation info from LVIS api.
         """
+        from .utils import smart_open_map
 
         try:
             import lvis
@@ -288,7 +289,7 @@ class LVISV05Dataset(CocoDataset):
             raise ImportError('Package lvis is not installed. Please run pip '
                               'install mmlvis to install open-mmlab forked '
                               'lvis.')
-        self.coco = LVIS(ann_file)
+        self.coco = smart_open_map(LVIS, ann_file)
         assert not self.custom_classes, 'LVIS custom classes is not supported'
         self.cat_ids = self.coco.get_cat_ids()
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}

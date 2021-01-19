@@ -33,9 +33,10 @@ class XMLDataset(CustomDataset):
         Returns:
             list[dict]: Annotation info from XML file.
         """
+        from .utils import smart_open_map
 
         data_infos = []
-        img_ids = mmcv.list_from_file(ann_file)
+        img_ids = smart_open_map(mmcv.list_from_file, ann_file)
         for img_id in img_ids:
             filename = f'JPEGImages/{img_id}.jpg'
             xml_path = osp.join(self.img_prefix, 'Annotations',
