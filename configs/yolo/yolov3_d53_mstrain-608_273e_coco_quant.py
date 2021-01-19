@@ -151,3 +151,4 @@ lr_config = dict(
 # runtime settings
 total_epochs = 273
 evaluation = dict(interval=1, metric=['bbox'])
+work_dir = "work_dirs/yolov3_d53_mstrain-608_273e_coco_quant"

@@ -74,7 +74,8 @@ train_pipeline = [
     dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
 ]
 test_pipeline = [
-    dict(type='LoadImageFromNori'),
+    #dict(type='LoadImageFromNori'),
+    dict(type = 'LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
         img_scale=(608, 608),
@@ -99,15 +100,17 @@ data = dict(
     val=dict(
         type=dataset_type,
         ann_file='/data/workspace/dataset/coco/annotations/2017/instances_val2017_nori.json',
-        img_prefix= None,
+        img_prefix= '/data/workspace/dataset/coco/val2017/',
+        use_nori = False,
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
         ann_file='/data/workspace/dataset/coco/annotations/2017/instances_val2017_nori.json',
-        img_prefix= None,
+        img_prefix= '/data/workspace/dataset/coco/val2017/',
+        use_nori = False,
         pipeline=test_pipeline))
 # optimizer
-optimizer = dict(type='SGD', lr=0.001, momentum=0.9, weight_decay=0.0005)
+optimizer = dict(type='SGD', lr=0.002, momentum=0.9, weight_decay=0.0005)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
@@ -115,7 +118,8 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=2000,  # same as burn-in in darknet
     warmup_ratio=0.1,
-    step=[218, 246])
+    step=[218, 246, 270])
 # runtime settings
-total_epochs = 273
+total_epochs = 300
 evaluation = dict(interval=1, metric=['bbox'])
+resume_from = "work_dirs/yolov3_d53_mstrain-608_273e_coco/epoch_204.pth"

@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/datasets/coco_detection.py', '../_base_/default_runtime.py'
+    '../_base_/datasets/coco_detection_nuscenes.py', '../_base_/default_runtime.py'
 ]
 model = dict(
     type='DETR',
@@ -15,7 +15,7 @@ model = dict(
         style='pytorch'),
     bbox_head=dict(
         type='TransformerHead',
-        num_classes=80,
+        num_classes = 24,
         in_channels=2048,
         num_fcs=2,
         transformer=dict(
@@ -98,7 +98,7 @@ train_pipeline = [
 # setting (size_divisor=32). While there is little effect on the performance
 # whether we use the default setting or use size_divisor=1.
 test_pipeline = [
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromNori'),
     dict(
         type='MultiScaleFlipAug',
         img_scale=(1333, 800),
@@ -129,4 +129,4 @@ optimizer_config = dict(grad_clip=dict(max_norm=0.1, norm_type=2))
 # learning policy
 lr_config = dict(policy='step', step=[100])
 total_epochs = 150
-resume_from='work_dirs/detr_r50_8x2_150e_coco/epoch_36.pth'
+evaluation = dict(interval=100, metric='bbox')
