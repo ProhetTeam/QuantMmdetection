@@ -1,3 +1,6 @@
 [submodule "thirdparty/mtransformer"]
 	path = thirdparty/mtransformer
 	url = git@git-core.megvii-inc.com:tanfeiyang/mtransformer.git
+[submodule "thirdparty/configs"]
+	path = thirdparty/configs
+	url = git@git-core.megvii-inc.com:tanfeiyang/detection_configs.git
