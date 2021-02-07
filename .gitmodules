@@ -4,3 +4,6 @@
 [submodule "thirdparty/configs"]
 	path = thirdparty/configs
 	url = git@git-core.megvii-inc.com:tanfeiyang/detection_configs.git
+[submodule "thirdparty/model_analysis_tool"]
+	path = thirdparty/model_analysis_tool
+	url = git@git-core.megvii-inc.com:tanfeiyang/model_analysis_tool.git
