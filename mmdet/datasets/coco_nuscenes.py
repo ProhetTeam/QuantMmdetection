@@ -12,6 +12,7 @@ from .builder import DATASETS
 @DATASETS.register_module()
 class NuscenesDataset(CocoDataset):
 
+    '''
     CLASSES = ('vehicle.truck', 'vehicle.construction', 'vehicle.motorcycle',
              'movable_object.barrier', 'vehicle.car', 'human.pedestrian.adult',
              'movable_object.trafficcone', 'human.pedestrian.construction_worker',
@@ -21,3 +22,5 @@ class NuscenesDataset(CocoDataset):
              'human.pedestrian.personal_mobility', 'vehicle.bus.bendy',
              'vehicle.emergency.police', 'human.pedestrian.child',
              'vehicle.emergency.ambulance', 'vehicle.ego', 'human.pedestrian.wheelchair')
+    '''
+    CLASSES = ('human', 'vehicle', 'vru')

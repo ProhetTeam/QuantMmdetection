@@ -54,9 +54,9 @@ if __name__ == '__main__':
     
     r""" 1. Float32 Model analysis """
     model_analysis_tool = ModelAnalyticalTool(model, is_quant = True, save_path = './model_analysis.html')
-    model_analysis_tool.weight_dist_analysis(smaple_num = 8)
+    model_analysis_tool.weight_dist_analysis(smaple_num = 15)
     
     infer_func = partial(inference_detector)
-    model_analysis_tool.activation_dist_analysis(infer_func, smaple_num = 8, img = args.img)
+    model_analysis_tool.activation_dist_analysis(infer_func, smaple_num = 15, img = args.img)
 
     model_analysis_tool.down_html()
