@@ -12,28 +12,13 @@ from .builder import DATASETS
 from collections import defaultdict
 from refile import smart_open
 from .pipelines import Compose
+
+from mmdet.core import eval_recalls
 import sys
 import json
 import os,psutil
 import copy
 
-class GetAnnsById:
-    def __init__(self, ann_dict, ann_path='s3://waymo-extracted/ann_by_img/'):
-        '''ann_dict: dict {annotation_id(str) : image_nori_id(str) or ann nori id}'''
-        self.ann_dict={}
-        self.ann_path=ann_path
-        for key,value in ann_dict.items():
-            self.ann_dict[eval(key)]=value
-    
-    def __getitem__(self,key):
-        if self.ann_path == 'nori://':
-            ann = json.load(smart_open(self.ann_path+self.ann_dict[key],'rb'))
-        else:
-            ann = json.load(smart_open(self.ann_path+self.ann_dict[key]+'.json'))
-        return ann[f'{key}']
-
-    def keys(self):
-        return self.ann_dict.keys()
 
 class GetAnnsByImg:
     def __init__(self, ann_dict, ann_path='s3://waymo-extracted/ann_by_img/'):
@@ -139,14 +124,10 @@ class ExternalAnn(COCO):
             ['annotations']:[]
             ['categories']:COCO['categories']
             ['img_index']:img_index_path (str) or img_index (dict)
-            ['ann_index']:ann_index_path (str) or ann_index (dict)
-            ['catToImgs']:catToImgs_path (str) or catToImgs (dict)
             ['ann_path']:ann_path_prefix (str)
             ['valid_inds']:[valid_image_ids] (list(int))
         } 
         img_index_path (str): path of index file or dict{f'{img_id}':ann_path(str)}
-        ann_index_path (str): path of index file or dict{f'{annotation_id}':ann_path(str)}
-        catToImgs_path (str): path of index file or dict{f'{category_id}':[img_ids]}
         (used json.dump & json.load so keys are str)
         ann_path_prefix (str): 'nori://' or folder path(str)
         [valid_image_ids] (list(int)): [imgIDs] for imgs that have annotation
@@ -192,39 +173,24 @@ class ExternalAnn(COCO):
             self.ann_path = self.dataset['ann_path']
 
         # create class members
-        if isinstance(self.dataset['ann_index'],str):            
-            with smart_open(self.dataset['ann_index']) as file:
-                ann_nori_dict = json.load(file)
-        elif isinstance(self.dataset['ann_index'],dict):
-            ann_nori_dict = self.dataset['ann_index']
 
         if isinstance(self.dataset['img_index'],str):
             with smart_open(self.dataset['img_index']) as file:
                 img_nori_dict = json.load(file)
         elif isinstance(self.dataset['img_index'],dict):
             img_nori_dict = self.dataset['img_index']
-        
-        if isinstance(self.dataset['catToImgs'],str):
-            with smart_open(self.dataset['catToImgs']) as file:
-                catToImgs = json.load(file)
-        elif isinstance(self.dataset['catToImgs'],dict):
-            catToImgs = self.dataset['catToImgs']
 
         if 'ann_path' in self.dataset:
-            self.anns = GetAnnsById(ann_nori_dict, ann_path=self.ann_path)
             self.imgToAnns = GetAnnsByImg(img_nori_dict, ann_path=self.ann_path)
             self.imgs = GetImgsById(img_nori_dict, ann_path=self.ann_path)
             self.dataset['images'] = GetImgsInList(img_nori_dict, ann_path=self.ann_path)
         else:
-            self.anns = GetAnnsById(ann_nori_dict)
             self.imgToAnns = GetAnnsByImg(img_nori_dict)
             self.imgs = GetImgsById(img_nori_dict)
             self.dataset['images'] = GetImgsInList(img_nori_dict)
-        self.catToImgs = { eval(cat_id): catToImgs[cat_id] for cat_id in catToImgs.keys() }
         print('index created (t={:0.2f}s)'.format(time.time() - tic))
         print(psutil.Process(os.getpid()).memory_info().rss / 1024 ** 3 , 'GB rss after create index')
         self.cats = cats
-        self.cat_img_map = self.catToImgs
 
     def getAnnIds(self, imgIds=[],catIds=[]):
         """
@@ -240,20 +206,45 @@ class ExternalAnn(COCO):
             return list(self.anns.keys())
         else:
             if not len(imgIds) == 0:
-                lists = [
-                    self.imgToAnns[imgId] for imgId in imgIds
-                    if imgId in self.imgToAnns.keys()
-                ]
-                anns = list(itertools.chain.from_iterable(lists))
-                if len(catIds) == 0:
-                    return [ann['id'] for ann in anns]
+                if len(catIds) == 0:                    
+                    lists = [
+                        self.imgToAnns[imgId] for imgId in imgIds
+                        if imgId in self.imgToAnns.keys()
+                    ]
+                    anns = list(itertools.chain.from_iterable(lists))
+                    return [ann['id'] for ann in anns]                
                 else:
-                    return list(ann['id'] for ann in anns 
-                    if self.anns[ann['id']]['category_id'] in catIds)
+                    ids = []
+                    for imgId in imgIds:
+                        for ann in self.imgToAnns[imgId]:
+                            if ann['category_id'] in catIds:
+                                ids.append(ann['id'])
+                    return ids
             else:
-                return list(id for id in self.anns.keys() 
-                if self.anns[id]['category_id'] in catIds)
+                ids=[]
+                for i in self.imgToAnns.keys():
+                    for ann in self.imgToAnns[i]:
+                        if ann['category_id'] in catIds:
+                            ids.append(ann['id'])
+                return ids
 
+    def getImgIds(self, imgIds=[], catIds=[]):
+        '''
+        Get img ids that satisfy given filter conditions.
+        :param imgIds (int array) : get imgs for given ids
+        :param catIds (int array) : get imgs with all given cats
+        :return: ids (int array)  : integer array of img ids
+        '''
+        imgIds = imgIds if _isArrayLike(imgIds) else [imgIds]
+        catIds = catIds if _isArrayLike(catIds) else [catIds]
+
+        if len(imgIds) == len(catIds) == 0:
+            ids = self.imgs.keys()
+        else:
+            ids = set(imgIds)
+            if len(catIds) != 0:
+                print('catToImgs Not Generated.')
+        return list(ids)
 
     def loadAnns(self, ids=[]):
         """
@@ -343,9 +334,11 @@ class ExternalCocoDataset(CocoDataset):
         self.cat_ids = [cat['id'] for cat in self.coco.dataset['categories']]
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
         self.img_ids = list(self.coco.imgs.keys())
-
-        with smart_open(self.coco.dataset['img_index']) as file:
-            img_nori_dict = json.load(file)
+        if isinstance(self.coco.dataset['img_index'],str):
+            with smart_open(self.coco.dataset['img_index']) as file:
+                img_nori_dict = json.load(file)
+        else:
+            img_nori_dict = self.coco.dataset['img_index']
         if self.use_nori == False:
             if 'ann_path' in self.coco.dataset:
                 data_infos = GetImgsInList(img_nori_dict,ann_path=self.coco.dataset['ann_path'],use_nori=False)
@@ -370,8 +363,7 @@ class ExternalCocoDataset(CocoDataset):
         """
 
         img_id = self.data_infos[idx]['id']
-        ann_ids = self.coco.getAnnIds(imgIds=[img_id])
-        ann_info = self.coco.loadAnns(ann_ids)
+        ann_info = self.coco.imgToAnns[img_id]
         return self._parse_ann_info(self.data_infos[idx], ann_info)
     
     def _set_group_flag(self):
@@ -395,8 +387,7 @@ class ExternalCocoDataset(CocoDataset):
         """
 
         img_id = self.data_infos[idx]['id']
-        ann_ids = self.coco.getAnnIds(imgIds=[img_id])
-        ann_info = self.coco.loadAnns(ann_ids)
+        ann_info = self.coco.imgToAnns[img_id]
         return [ann['category_id'] for ann in ann_info]
     
     def _det2json(self, results):
@@ -420,3 +411,29 @@ class ExternalCocoDataset(CocoDataset):
                         print('abnormal bbox in result,class id:', label, '\n', bboxes)
         return json_results
 
+    def fast_eval_recall(self, results, proposal_nums, iou_thrs, logger=None):
+        gt_bboxes = []
+        for i in range(len(self.img_ids)):            
+            ann_info = self.coco.imgToAnns[self.img_ids[i]]
+            if len(ann_info) == 0:
+                gt_bboxes.append(np.zeros((0, 4)))
+                continue
+            bboxes = []
+            for ann in ann_info:
+                if ann.get('ignore', False) or ann['iscrowd']:
+                    continue
+                x1, y1, w, h = ann['bbox']
+                bboxes.append([x1, y1, x1 + w, y1 + h])
+            bboxes = np.array(bboxes, dtype=np.float32)
+            if bboxes.shape[0] == 0:
+                bboxes = np.zeros((0, 4))
+            gt_bboxes.append(bboxes)
+
+        recalls = eval_recalls(
+            gt_bboxes, results, proposal_nums, iou_thrs, logger=logger)
+        ar = recalls.mean(axis=1)
+        return ar
+
+@DATASETS.register_module()
+class ExtNuscenesDataset(ExternalCocoDataset):
+    CLASSES = ('human', 'vehicle', 'vru')

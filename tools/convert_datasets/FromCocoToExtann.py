@@ -104,38 +104,16 @@ def CocoToExtAnn(orig_coco, out_file, nori_path, index_path, ds_name):
     map_dict = UploadAnnToNori(nori_path, ds_name)    
     index = GenerateNoriIndex(nori_path, ds_name)
     local = '/tmp/extracted_anns/'
-    img_index, ann_index, catToImgs = {}, {}, {}
+    img_index= {}
     for i in orig_coco['images']:
         ann =f'{i["id"]}' + '.json'
         if ann not in index:
             continue
         img_index[i['id']] = index[ann]
-    for i in orig_coco['annotations']:
-        ann =f'{i["image_id"]}' + '.json'
-        if ann not in index:
-            continue
-        ann_index[i['id']] = index[ann]
-        if i['category_id'] not in catToImgs:
-            catToImgs[i['category_id']]=[]
-        catToImgs[i['category_id']].append(i['image_id'])
     img_index_path = smart_path_join( index_path, ds_name, 'img_index.json')
-    ann_index_path = smart_path_join( index_path, ds_name, 'ann_index.json')
-    catToImgs_path = smart_path_join( index_path, ds_name, 'catToImgs.json')
     with smart_open(img_index_path,'w') as data:
-        data.write(json.dumps(img_index))
-    with smart_open(ann_index_path,'w') as data:
-        data.write(json.dumps(ann_index))
-    with smart_open(catToImgs_path,'w') as data:
-        data.write(json.dumps(catToImgs))
-    '''
-    new_json['img_index'] = img_index_path
-    new_json['ann_index'] = ann_index_path
-    new_json['catToImgs'] = catToImgs_path
-    '''
+        data.write(json.dumps(img_index))        
     new_json['img_index'] = img_index
-    new_json['ann_index'] = ann_index
-    new_json['catToImgs'] = catToImgs
-
     new_json['ann_path'] = 'nori://'
     with smart_open(index_path+ds_name+'/extann.json','w') as data:
         data.write(json.dumps(new_json))

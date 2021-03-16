@@ -3,7 +3,7 @@ from .cityscapes import CityscapesDataset
 from .coco import CocoDataset
 from .coco_nuscenes import NuscenesDataset
 from .coco_waymo import WaymoDataset
-from .external_ann import ExternalCocoDataset
+from .external_ann import ExternalCocoDataset, ExtNuscenesDataset
 from .custom import CustomDataset
 from .dataset_wrappers import (ClassBalancedDataset, ConcatDataset,
                                RepeatDataset)
@@ -22,5 +22,5 @@ __all__ = [
     'DistributedSampler', 'build_dataloader', 'ConcatDataset', 'RepeatDataset',
     'ClassBalancedDataset', 'WIDERFaceDataset', 'DATASETS', 'PIPELINES',
     'build_dataset', 'replace_ImageToTensor', 'NuscenesDataset',
-    'WaymoDataset', 'ExternalCocoDataset'
+    'WaymoDataset', 'ExternalCocoDataset','ExtNuscenesDataset',
 ]
