@@ -41,6 +41,7 @@ if __name__ == '__main__':
     parser.add_argument('--config-int', help='Int config file')
     parser.add_argument('--checkpoint-float', help='Float checkpoint file')
     parser.add_argument('--checkpoint-int', help = 'Int checkpoint file')
+    parser.add_argument('--save-path', type = str, default= "./model_analysis.html", help = "html save path")
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     args = parser.parse_args()
@@ -55,9 +56,8 @@ if __name__ == '__main__':
     model_analysis_tool = QModelAnalysis(model_float, model_int, 
                                          smaple_num = 15, 
                                          max_data_length = 2e4, 
-                                         bin_size = 0.02, 
-                                         save_path = './model_analysis.html')
+                                         bin_size = 0.01, 
+                                         save_path = args.save_path,
+                                         use_torch_plot = False)
     model_analysis_tool(inference_detector, img = args.img)
-
-
     model_analysis_tool.down_html()
