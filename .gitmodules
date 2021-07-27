@@ -1,3 +1,0 @@
-[submodule "thirdparty/configs"]
-	path = thirdparty/configs
-	url = git@git-core.megvii-inc.com:tanfeiyang/detection_configs.git
