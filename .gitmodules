@@ -1,0 +1,3 @@
+[submodule "thirdparty/det_quant_config"]
+	path = thirdparty/det_quant_config
+	url = https://github.com/ProhetTeam/det_quant_config.git
